@@ -20,6 +20,9 @@ from torchvision.transforms import *
 
 from models import *
 
+def V0_transform():
+    return ToTensor(), ToTensor()
+
 def V1_transform():
     train_transform = Compose([
         RandomCrop(32, padding=4, padding_mode='reflect'), 
@@ -36,10 +39,10 @@ def V1_transform():
     return train_transform, test_transform
 
 def train(epoch=2, batch_size=64, data_path='../dataset/voc'):
-    train_transform, test_transform = V1_transform()
+    train_transform, test_transform = V0_transform()
 
-    train = tv.datasets.VOCSegmentation(data_path, image_set='train')
-    test = tv.datasets.VOCSegmentation(data_path, image_set='val')
+    train = tv.datasets.VOCSegmentation(data_path, image_set='train', transform=train_transform)
+    test = tv.datasets.VOCSegmentation(data_path, image_set='val', transform=test_transform)
 
     train_dataloader = torch.utils.data.DataLoader(train, shuffle=True, batch_size=batch_size, pin_memory=True)
     test_dataloader = torch.utils.data.DataLoader(test, batch_size=32)
