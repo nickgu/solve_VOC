@@ -46,23 +46,25 @@ def train(epoch=2, batch_size=64, data_path='../dataset/voc'):
     print data_path
     train_transform, test_transform = V0_transform()
 
-    train = tv.datasets.VOCSegmentation(data_path, image_set='train', transforms=train_transform)
-    test = tv.datasets.VOCSegmentation(data_path, image_set='val', transforms=test_transform)
+    train = tv.datasets.VOCSegmentation(data_path, image_set='train', 
+            transform=train_transform, target_transform=train_transform)
+    test = tv.datasets.VOCSegmentation(data_path, image_set='val', 
+            transform=test_transform, target_transform=test_transform)
 
     train_dataloader = torch.utils.data.DataLoader(train, shuffle=True, batch_size=batch_size, pin_memory=True)
     test_dataloader = torch.utils.data.DataLoader(test, batch_size=32)
 
     # train phase.
     model = tv.models.segmentation.fcn_resnet101(pretrained=True)
-
     cuda = torch.device('cuda')     # Default CUDA device
     model.to(cuda)
 
-    print train[0][0].shape
+    x = train[0][0].unsqueeze(0)
+    print x.shape
     print train[0][1].shape
-    y = model(train[0][0].unsqueeze(0))
-    print y.shape
-    print train[0][1].shape
+    y = model(x.cuda())
+    print y.keys()
+    print train[0][1].dtype
 
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
