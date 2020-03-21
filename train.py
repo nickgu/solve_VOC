@@ -10,6 +10,7 @@ import random
 import pydev
 import easyai
 
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -19,11 +20,15 @@ from torchvision.transforms import *
 from models import *
 
 def V0_transform():
-    tr = Compose([
+    img_tr = Compose([
         Resize((500, 500)),
         ToTensor()
     ])
-    return tr, tr
+    tgt_tr = Compose([
+        Resize((500, 500)),
+        Lambda(lambda x:torch.tensor(np.array(x)))
+    ])
+    return img_tr, tgt_tr
 
 def V1_transform():
     train_transform = Compose([
@@ -44,12 +49,12 @@ def V1_transform():
 
 def train(epoch=2, batch_size=64, data_path='../dataset/voc'):
     print data_path
-    train_transform, test_transform = V0_transform()
+    image_transform, target_transform = V0_transform()
 
     train = tv.datasets.VOCSegmentation(data_path, image_set='train', 
-            transform=train_transform, target_transform=train_transform)
+            transform=image_transform, target_transform=target_transform)
     test = tv.datasets.VOCSegmentation(data_path, image_set='val', 
-            transform=test_transform, target_transform=test_transform)
+            transform=image_transform, target_transform=target_transform)
 
     train_dataloader = torch.utils.data.DataLoader(train, shuffle=True, batch_size=batch_size, pin_memory=True)
     test_dataloader = torch.utils.data.DataLoader(test, batch_size=32)
@@ -59,15 +64,7 @@ def train(epoch=2, batch_size=64, data_path='../dataset/voc'):
     cuda = torch.device('cuda')     # Default CUDA device
     model.to(cuda)
 
-    x = train[0][0].unsqueeze(0)
-    print x.shape
-    print train[0][1].shape
-    y = model(x.cuda())
-    print y.keys()
-    print train[0][1].dtype
-
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-
     loss_fn = nn.CrossEntropyLoss()
 
     easyai.epoch_train(train_dataloader, model, optimizer, loss_fn, epoch, 
