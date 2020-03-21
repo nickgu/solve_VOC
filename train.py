@@ -19,10 +19,15 @@ from torchvision.transforms import *
 from models import *
 
 def V0_transform():
-    return ToTensor(), ToTensor()
+    tr = Compose([
+        Resize((500, 500)),
+        ToTensor()
+    ])
+    return tr, tr
 
 def V1_transform():
     train_transform = Compose([
+        Resize((500, 500)),
         RandomCrop(32, padding=4, padding_mode='reflect'), 
         RandomHorizontalFlip(),
         ToTensor(),
@@ -30,6 +35,7 @@ def V1_transform():
         Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
         ])
     test_transform = Compose([
+        Resize((500, 500)),
         ToTensor(),
         Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
         ])
@@ -40,8 +46,8 @@ def train(epoch=2, batch_size=64, data_path='../dataset/voc'):
     print data_path
     train_transform, test_transform = V0_transform()
 
-    train = tv.datasets.VOCSegmentation(data_path, image_set='train', transform=train_transform)
-    test = tv.datasets.VOCSegmentation(data_path, image_set='val', transform=test_transform)
+    train = tv.datasets.VOCSegmentation(data_path, image_set='train', transforms=train_transform)
+    test = tv.datasets.VOCSegmentation(data_path, image_set='val', transforms=test_transform)
 
     train_dataloader = torch.utils.data.DataLoader(train, shuffle=True, batch_size=batch_size, pin_memory=True)
     test_dataloader = torch.utils.data.DataLoader(test, batch_size=32)
@@ -51,6 +57,12 @@ def train(epoch=2, batch_size=64, data_path='../dataset/voc'):
 
     cuda = torch.device('cuda')     # Default CUDA device
     model.to(cuda)
+
+    print train[0][0].shape
+    print train[0][1].shape
+    y = model(train[0][0].unsqueeze(0))
+    print y.shape
+    print train[0][1].shape
 
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
