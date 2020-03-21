@@ -8,9 +8,7 @@ import sys
 import random
 
 import pydev
-
-sys.path.append('/home/psdz/lab/practice/learn_pytorch')
-import easy_train
+import easyai
 
 import torch
 import torch.nn as nn
@@ -39,6 +37,7 @@ def V1_transform():
     return train_transform, test_transform
 
 def train(epoch=2, batch_size=64, data_path='../dataset/voc'):
+    print data_path
     train_transform, test_transform = V0_transform()
 
     train = tv.datasets.VOCSegmentation(data_path, image_set='train', transform=train_transform)
@@ -57,11 +56,11 @@ def train(epoch=2, batch_size=64, data_path='../dataset/voc'):
 
     loss_fn = nn.CrossEntropyLoss()
 
-    easy_train.epoch_train(train_dataloader, model, optimizer, loss_fn, epoch, 
+    easyai.epoch_train(train_dataloader, model, optimizer, loss_fn, epoch, 
             batch_size=batch_size, device=cuda, validation=test_dataloader, validation_epoch=3,
             scheduler=None)
 
-    easy_train.epoch_test(test_dataloader, model, device=cuda)
+    easyai.epoch_test(test_dataloader, model, device=cuda)
 
     print 'train over'
 
