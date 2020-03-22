@@ -26,7 +26,8 @@ def V0_transform():
     ])
     tgt_tr = Compose([
         Resize((500, 500)),
-        Lambda(lambda x:torch.tensor(np.array(x)))
+        Lambda(lambda x:torch.tensor(np.array(x)).to(torch.long)),
+        Lambda(lambda x:x.where(x<21, torch.zeros(x.shape).to(torch.long)))
     ])
     return img_tr, tgt_tr
 
@@ -47,7 +48,9 @@ def V1_transform():
 
     return train_transform, test_transform
 
-def train(epoch=2, batch_size=64, data_path='../dataset/voc'):
+def train(epoch=2, batch_size=16, data_path='../dataset/voc'):
+    cuda = torch.device('cuda')     # Default CUDA device
+
     print data_path
     image_transform, target_transform = V0_transform()
 
@@ -60,12 +63,14 @@ def train(epoch=2, batch_size=64, data_path='../dataset/voc'):
     test_dataloader = torch.utils.data.DataLoader(test, batch_size=32)
 
     # train phase.
-    model = tv.models.segmentation.fcn_resnet101(pretrained=True)
-    cuda = torch.device('cuda')     # Default CUDA device
-    model.to(cuda)
+    model = V0_torchvision_fcn_res101()
 
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     loss_fn = nn.CrossEntropyLoss()
+    def calc_loss(y_, y):
+        y_ = y_.reshape(-1, y_.shape[-1])
+        y = y.reshape(-1)
+        return loss_fn(y_, y)
 
     easyai.epoch_train(train_dataloader, model, optimizer, loss_fn, epoch, 
             batch_size=batch_size, device=cuda, validation=test_dataloader, validation_epoch=3,
@@ -76,4 +81,4 @@ def train(epoch=2, batch_size=64, data_path='../dataset/voc'):
     print 'train over'
 
 if __name__=='__main__':
-    fire.Fire()
+    fire.Fire(train)

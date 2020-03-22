@@ -53,4 +53,4 @@ def infer(data_path, idx=0, image_set='val'):
 
 
 if __name__=='__main__':
-    fire.Fire()
+    fire.Fire(infer)
