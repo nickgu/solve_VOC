@@ -29,26 +29,11 @@ def V0_transform():
         Lambda(lambda x:torch.tensor(np.array(x)).to(torch.long)),
         Lambda(lambda x:x.where(x<21, torch.zeros(x.shape).to(torch.long)))
     ])
+    
+    # Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)) # torchvision model normalize.
     return img_tr, tgt_tr
 
-def V1_transform():
-    train_transform = Compose([
-        Resize((500, 500)),
-        RandomCrop(32, padding=4, padding_mode='reflect'), 
-        RandomHorizontalFlip(),
-        ToTensor(),
-        RandomErasing(p=0.5, scale=(0.1, 0.1)),
-        Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
-        ])
-    test_transform = Compose([
-        Resize((500, 500)),
-        ToTensor(),
-        Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
-        ])
-
-    return train_transform, test_transform
-
-def train(epoch=2, batch_size=16, data_path='../dataset/voc'):
+def train(epoch=10, batch_size=16, data_path='../dataset/voc'):
     cuda = torch.device('cuda')     # Default CUDA device
 
     print data_path
@@ -65,20 +50,17 @@ def train(epoch=2, batch_size=16, data_path='../dataset/voc'):
     # train phase.
     model = V0_torchvision_fcn_res101()
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
     loss_fn = nn.CrossEntropyLoss()
-    def calc_loss(y_, y):
-        y_ = y_.reshape(-1, y_.shape[-1])
-        y = y.reshape(-1)
-        return loss_fn(y_, y)
+    
+    def save_model(epoch):
+        torch.save(model.state_dict(), 
+                'checkpoints/%s_%d.pkl' % (type(model).__name__, epoch))
 
     easyai.epoch_train(train_dataloader, model, optimizer, loss_fn, epoch, 
-            batch_size=batch_size, device=cuda, validation=test_dataloader, validation_epoch=3,
-            scheduler=None)
-
-    easyai.epoch_test(test_dataloader, model, device=cuda)
-
+            batch_size=batch_size, device=cuda, post_process=save_model)
     print 'train over'
+
 
 if __name__=='__main__':
     fire.Fire(train)
