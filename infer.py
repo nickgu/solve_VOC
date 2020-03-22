@@ -37,10 +37,16 @@ def infer(data_path, idx=0, image_set='val', model_path=None):
     y = model(data[idx][0].unsqueeze(0).cuda())
 
     out = y.squeeze()
-    print out.shape
-    v = out.max(dim=2).indices.cpu().to(torch.uint8).numpy()
+    v = out.max(dim=2).indices.cpu().to(torch.uint8)
 
-    im = PIL.Image.fromarray(v)
+    c_union = sum( (v>0) + (data[idx][1]) )
+    print sum(c_union)
+    c_inter = sum( (v>0) * (v==data[idx][1]) )
+    print sum(c_inter)
+    precision = sum(c_inter)*1. / sum(c_union)
+    pydev.info('Precision=%.2f%%' % (precision*100.))
+
+    im = PIL.Image.fromarray(v.numpy())
     im.putpalette(ori_imgs[0][1].getpalette())
 
     ori_imgs[idx][0].show()
