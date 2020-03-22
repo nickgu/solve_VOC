@@ -15,17 +15,39 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision as tv
+import torchvision.transforms.functional as tvf
 from torchvision.transforms import *
 
 from models import *
 
+def my_segmentation_transforms(image, segmentation):
+    if random.random() > 0.5:
+        angle = random.randint(-15, 15)
+        image = tvf.rotate(image, angle)
+        segmentation = tvf.rotate(segmentation, angle)
+
+    start_x = random.random() * 0.2 * image.size[0]
+    start_y = random.random() * 0.2 * image.size[1]
+    image = tvf.crop(image, start_x, start_y, 300, 300)
+    segmentation = tvf.crop(segmentation, start_x, start_y, 300, 300)
+
+    #image.show()
+    #segmentation.show()
+
+    image = tvf.to_tensor(image)
+    segmentation = torch.tensor(np.array(segmentation)).to(torch.long)
+    segmentation = segmentation.where(segmentation<21, 
+                        torch.zeros(segmentation.shape).to(torch.long))
+    return image, segmentation
+
+
 def V0_transform():
     img_tr = Compose([
-        Resize((500, 500)),
+        Resize((300, 300)),
         ToTensor()
     ])
     tgt_tr = Compose([
-        Resize((500, 500)),
+        Resize((300, 300)),
         Lambda(lambda x:torch.tensor(np.array(x)).to(torch.long)),
         Lambda(lambda x:x.where(x<21, torch.zeros(x.shape).to(torch.long)))
     ])
@@ -40,9 +62,9 @@ def train(epoch=10, batch_size=16, data_path='../dataset/voc'):
     image_transform, target_transform = V0_transform()
 
     train = tv.datasets.VOCSegmentation(data_path, image_set='train', 
-            transform=image_transform, target_transform=target_transform)
+            transforms=my_segmentation_transforms)
     test = tv.datasets.VOCSegmentation(data_path, image_set='val', 
-            transform=image_transform, target_transform=target_transform)
+            transform=my_segmentation_transforms)
 
     train_dataloader = torch.utils.data.DataLoader(train, shuffle=True, batch_size=batch_size, pin_memory=True)
     test_dataloader = torch.utils.data.DataLoader(test, batch_size=32)

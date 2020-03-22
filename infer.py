@@ -26,7 +26,7 @@ def precision(y_, y):
     precision = sum(c_inter)*1. / sum(c_union)
     return precision
 
-def infer(data_path, idx=0, image_set='val', model_path=None):
+def infer(data_path, image_set='val', model_path=None):
     ori_imgs = tv.datasets.VOCSegmentation(data_path, image_set=image_set)
     img_tr, tgt_tr = train.V0_transform()
     data = tv.datasets.VOCSegmentation(data_path, image_set=image_set, transform=img_tr, target_transform=tgt_tr)
@@ -39,19 +39,24 @@ def infer(data_path, idx=0, image_set='val', model_path=None):
         model.load_state_dict(torch.load(model_path))
         pydev.info('model load ok')
 
-    y = model(data[idx][0].unsqueeze(0).cuda())
+    while True:
+        idx = sys.stdin.readline()
+        idx = int(idx)
+        pydev.info('Index=%d' % idx)
 
-    out = y.squeeze()
-    v = out.max(dim=2).indices.cpu().to(torch.uint8)
-    prec = precision(v, data[idx][1])
-    pydev.info('Precision=%.2f%%' % (prec*100.))
+        y = model(data[idx][0].unsqueeze(0).cuda())
 
-    im = PIL.Image.fromarray(v.numpy())
-    im.putpalette(ori_imgs[0][1].getpalette())
+        out = y.squeeze()
+        v = out.max(dim=2).indices.cpu().to(torch.uint8)
+        prec = precision(v, data[idx][1])
+        pydev.info('Precision=%.2f%%' % (prec*100.))
 
-    ori_imgs[idx][0].show()
-    ori_imgs[idx][1].show()
-    im.show()
+        im = PIL.Image.fromarray(v.numpy())
+        im.putpalette(ori_imgs[0][1].getpalette())
+
+        ori_imgs[idx][0].show()
+        ori_imgs[idx][1].show()
+        im.show()
 
 def eval(data_path, image_set='val', model_path=None):
     img_tr, tgt_tr = train.V0_transform()
@@ -79,6 +84,7 @@ def eval(data_path, image_set='val', model_path=None):
             acc_prec += prec
             acc_count += 1
 
+            bar.set_description('MeanPrecision=%.2f%%' % (acc_prec*100. / acc_count))
         pydev.info('MeanPrecision=%.2f%%' % (acc_prec*100. / acc_count))
 
 if __name__=='__main__':
