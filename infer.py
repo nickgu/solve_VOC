@@ -21,7 +21,7 @@ import train
 import models
 
 def precision(y_, y):
-    c_union = sum( ((y>0)*(y<=20)) + (y_>0) )
+    c_union = sum( ((y>0)*(y<=30)) + (y_>0)*(y<=30) )
     c_inter = sum( (y>0) * (y==y_) )
     precision = sum(c_inter)*1. / sum(c_union)
     return precision
@@ -59,7 +59,7 @@ def infer(data_path, image_set='val', model_path=None):
         im.show()
 
 def eval(data_path, image_set='val', model_path=None):
-    img_tr, tgt_tr = train.V0_transform()
+    img_tr, tgt_tr = train.eval_transform()
     data = tv.datasets.VOCSegmentation(data_path, image_set=image_set, transform=img_tr, target_transform=tgt_tr)
     pydev.info('Data loaded')
 

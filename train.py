@@ -36,20 +36,18 @@ def my_segmentation_transforms(image, segmentation):
 
     image = tvf.to_tensor(image)
     segmentation = torch.tensor(np.array(segmentation)).to(torch.long)
-    segmentation = segmentation.where(segmentation<21, 
+    segmentation = segmentation.where(segmentation<=30, 
                         torch.zeros(segmentation.shape).to(torch.long))
     return image, segmentation
 
 
-def V0_transform():
+def eval_transform():
     img_tr = Compose([
-        Resize((300, 300)),
         ToTensor()
     ])
     tgt_tr = Compose([
-        Resize((300, 300)),
         Lambda(lambda x:torch.tensor(np.array(x)).to(torch.long)),
-        Lambda(lambda x:x.where(x<21, torch.zeros(x.shape).to(torch.long)))
+        #Lambda(lambda x:x.where(x<=30, torch.zeros(x.shape).to(torch.long)))
     ])
     
     # Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)) # torchvision model normalize.
@@ -57,9 +55,7 @@ def V0_transform():
 
 def train(epoch=10, batch_size=16, data_path='../dataset/voc'):
     cuda = torch.device('cuda')     # Default CUDA device
-
     print data_path
-    image_transform, target_transform = V0_transform()
 
     train = tv.datasets.VOCSegmentation(data_path, image_set='train', 
             transforms=my_segmentation_transforms)
