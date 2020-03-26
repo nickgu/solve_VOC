@@ -53,7 +53,7 @@ def eval_transform():
     # Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)) # torchvision model normalize.
     return img_tr, tgt_tr
 
-def train(epoch=10, batch_size=16, data_path='../dataset/voc', learning_rate=1e-4):
+def train(epoch=30, batch_size=16, data_path='../dataset/voc', learning_rate=1e-5):
     cuda = torch.device('cuda')     # Default CUDA device
     print data_path
 
@@ -66,7 +66,8 @@ def train(epoch=10, batch_size=16, data_path='../dataset/voc', learning_rate=1e-
     test_dataloader = torch.utils.data.DataLoader(test, batch_size=32)
 
     # train phase.
-    model = V0_torchvision_fcn_res101()
+    #model = V0_tv_fcn_res101()
+    model = V1_tv_dlabv3_res101()
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     loss_fn = nn.CrossEntropyLoss()
